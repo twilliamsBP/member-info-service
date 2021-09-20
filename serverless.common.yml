@@ -1,0 +1,80 @@
+### VPC definition ###
+vpc:
+    securityGroupIds:
+      - ${ssm:/${self:provider.stage}/securitygroup-db-horz/id} # Create sg for lambdas to apply the principle of least privilege
+    subnetIds:
+      - ${ssm:/${self:provider.stage}/subnet-db-horz-01/id} 
+      - ${ssm:/${self:provider.stage}/subnet-db-horz-02/id}  
+
+### Endpoints definition ###
+authorizer: arn:aws:lambda:${self:provider.region}:${ssm:/${self:provider.stage}/account/id}:function:authorizer-api-${self:provider.stage}-authorizer
+rds_proxy_fi: rds-proxy-${self:provider.stage}-fi.proxy-${ssm:/${self:provider.stage}/${self:provider.region}/id}.${self:provider.region}.rds.amazonaws.com
+rds_proxy_global: rds-proxy-${self:provider.stage}-glbl.proxy-${ssm:/${self:provider.stage}/${self:provider.region}/id}.${self:provider.region}.rds.amazonaws.com
+rds_proxy_clr: rds-proxy-${self:provider.stage}-clr.proxy-${ssm:/${self:provider.stage}/${self:provider.region}/id}.${self:provider.region}.rds.amazonaws.com
+cypherResource: arn:aws:secretsmanager:${self:provider.region}:${ssm:/${self:provider.stage}/account/id}:secret:${self:provider.stage}/authorizer/cypher-${ssm:/${self:provider.stage}/cypher/authorizer/id}
+smtpResource: arn:aws:secretsmanager:${self:provider.region}:${ssm:/${self:provider.stage}/account/id}:secret:${self:provider.stage}/smtp/${ssm:/${self:provider.stage}/smtp/id}
+cypherResourceDecrypt: arn:aws:secretsmanager:${self:provider.region}:${ssm:/${self:provider.stage}/account/id}:secret:${self:provider.stage}/preuser/key-${ssm:/${self:provider.stage}/key/preuser/id}
+
+### Custom Domain definition ###
+customDomain:
+    domainName: ${self:custom.customDomainName.${self:provider.stage}}
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+    certificateName: ${self:custom.customCertificateName.${self:provider.stage}}
+    basePath: ${self:custom.serviceName}
+    endpointType: 'edge'
+
+customDomainName:
+    dev: ${self:provider.stage}.api.givesrewards.com
+    qa: ${self:provider.stage}.api.givesrewards.com
+    stg: ${self:provider.stage}.api.givesrewards.com
+    prod: api.givesrewards.com
+
+customCertificateName:
+  dev: '*.api.givesrewards.com'
+  qa: '*.api.givesrewards.com'
+  stg: '*.api.givesrewards.com'
+  prod: '*.givesrewards.com'
+
+### Resources definition ###
+GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+GatewayResponse401:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: EXPIRED_TOKEN
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '401'
+
+AuthFailureGatewayResponse401:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: UNAUTHORIZED
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '401'

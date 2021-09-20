@@ -1,0 +1,240 @@
+service: ${self:custom.serviceName}-api-test
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  logRetentionInDays: 30
+  vpc: ${self:custom.rds_vpc.${self:provider.stage}}
+  environment:
+    DB_USER: bbuser_fi_%s
+    DB_PASS: bbuser_fi_%s
+    DB_NAME: bbfi_%s
+    DB_PORT: 5432
+    DB_HOST: fi.buzz${self:custom.fidbhost.${self:provider.stage}}.com
+    GLOBAL_DB_USER: bbuser_global
+    GLOBAL_DB_PASS: bbuser_global
+    GLOBAL_DB_NAME: bbglobal
+    GLOBAL_DB_HOST: glbl.buzz${self:custom.fidbhost.${self:provider.stage}}.com
+
+resources:
+  Resources:
+    cashbackRedemptionQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "${self:service}-${self:provider.stage}-cashback-redemption-test"
+
+    RoleLifetimeCashback:
+        Type: "AWS::IAM::Role"
+        Properties:
+          Path: /
+          AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Principal:
+                    Service:
+                    - lambda.amazonaws.com
+                  Action: sts:AssumeRole
+
+          Policies:
+              - PolicyName: PolicyLifetimeCashback
+                PolicyDocument:
+                  Version: '2012-10-17'
+                  Statement:
+                  - Effect: Allow 
+                    Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    Resource: "*"
+
+                  - Effect: Allow
+                    Action:
+                    - ec2:CreateNetworkInterface
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DetachNetworkInterface
+                    - ec2:DescribeSecurityGroups
+                    - e2:DescribeSubnets
+                    - ec2:DescribeVpcs
+                    - rds-db:connect
+                    Resource: "*" 
+
+    RoleReceiver:
+        Type: "AWS::IAM::Role"
+        Properties:
+          Path: /
+          AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Principal:
+                    Service:
+                    - lambda.amazonaws.com
+                  Action: sts:AssumeRole
+
+          Policies:
+              - PolicyName: PolicyReceiver
+                PolicyDocument:
+                  Version: '2012-10-17'
+                  Statement:
+                  - Effect: Allow
+                    Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    - ec2:CreateNetworkInterface
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DetachNetworkInterface
+                    - ec2:DescribeSecurityGroups
+                    - e2:DescribeSubnets
+                    - ec2:DescribeVpcs
+                    Resource: "*"
+                  - Effect: Allow
+                    Action:
+                    - sqs:ListQueues
+                    Resource: arn:aws:sqs:us-east-1:127301922222:*
+                  - Effect: "Allow"
+                    Action:
+                    - sqs:SendMessage
+                    - sqs:GetQueueUrl
+                    Resource: arn:aws:sqs:us-east-1:127301922222:*
+    
+    RoleSchedule:
+        Type: "AWS::IAM::Role"
+        Properties:
+          Path: /
+          AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Principal:
+                    Service:
+                    - lambda.amazonaws.com
+                  Action: sts:AssumeRole
+
+          Policies:
+              - PolicyName: PolicySchedule
+                PolicyDocument:
+                  Version: '2012-10-17'
+                  Statement:
+                  - Effect: Allow # note that these rights are given in the default policy and are required if you want logs out of your lambda(s)
+                    Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    Resource: "*"
+
+                  - Effect: Allow
+                    Action:
+                    - ec2:CreateNetworkInterface
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DetachNetworkInterface
+                    - ec2:DescribeSecurityGroups
+                    - e2:DescribeSubnets
+                    - ec2:DescribeVpcs
+                    Resource: "*"                  
+                  - Effect: "Allow"
+                    Action:
+                      - "s3:*"
+                    Resource: arn:aws:s3:::${self:custom.bucket.${self:provider.stage}}
+    
+functions:
+
+  lifetimeCashback:
+    role: RoleLifetimeCashback
+    handler: handler.lifetime
+    environment:
+      PER_PAGE_DEFAULT: 100
+      PAGE_DEFAULT: 1
+      CASHBACK_STATUS: DELIVERED
+    events:
+      - http: GET cashback/{lifeuserid}/{fi}
+
+  receiver:
+    role: RoleReceiver
+    handler: handler.receiver
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - cashbackRedemptionQueue
+              - Arn
+          batchSize: 1
+
+  schedule:
+    role: RoleSchedule
+    handler: handler.schedule
+    environment:
+      S3_BUCKET: ${self:custom.bucket.${self:provider.stage}}
+      FILE_TIMEZONE: America/Bogota
+    events:
+      - schedule: cron(0 5 * * ? *)
+    timeout: 900
+
+
+custom:
+
+  serviceName: cashback-function
+
+  bucket:
+    prod:
+    stg:
+    qa:
+    dev: butcketjosemanzanodev
+
+  fidbhost:
+    prod: prod
+    stg: stg
+    qa: qa
+    dev: dev
+
+  rds_vpc:
+    dev:
+      securityGroupIds:
+        - sg-09f840860bdeac980
+      subnetIds:
+        - subnet-089764b3369c31a26
+        - subnet-0c294e89e9b4277dd
+    qa:
+      securityGroupIds:
+        - sg-025e980114cb3c70d
+      subnetIds:
+        - subnet-0fbe73b3c44b10956
+        - subnet-0c367033dfef460ec
+    stg:
+      securityGroupIds:
+        - sg-049ce15cb29ba60b3
+      subnetIds:
+        - subnet-0ce2554ddffbdcbfa
+        - subnet-08b3623414a746596
+    prod:
+      securityGroupIds:
+        - sg-0fdcbc45712fea896
+      subnetIds:
+        - subnet-0e4ae5149117b5b88
+        - subnet-0164ef7eb1873a2fb
+
+package:
+  individually: true
+  exclude:
+    - dist/**
+    - .idea/**
+    - test/**
+    - README.md
+    - node_modules/**/README.*
+    - node_modules/**/test/**
+    - node_modules/**/LICENSE
+    - node_modules/**/LICENSE.*
+    - node_modules/**/NOTICE.*
+    - node_modules/**/BUNDLE_LICENSE.*
+    - node_modules/**/CONTRIBUTING.*
+    - node_modules/**/examples/**
+    - node_modules/**/CHANGELOG.*
+    - node_modules/**/aws-sdk/**
+
+plugins:
+  - serverless-plugin-include-dependencies

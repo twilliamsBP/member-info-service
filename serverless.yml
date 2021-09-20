@@ -1,0 +1,163 @@
+service: ${self:custom.serviceName}-api
+
+frameworkVersion: ">=1.53.0 <=1.61.2" # version range allowed
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  timeout: 30
+  logRetentionInDays: 30
+
+  deploymentBucket:
+    name: buzz-serverless-${self:provider.stage}
+    serverSideEncryption: AES256
+
+  vpc: ${file(serverless.common.yml):vpc}
+
+  logs:
+    restApi:
+      enableAccessLogging: false
+      level: INFO
+      dataTrace: true
+
+  environment:
+      LOGGING_LEVEL: ${self:custom.loggingLevel.${self:provider.stage}}
+      REGION: ${self:provider.region}
+      GET_LIFEUSER_POINTS: https://${self:custom.points.${self:provider.stage}}api.givesrewards.com/points
+      GET_LIFEUSER_ACCOUNTS: https://${self:custom.points.${self:provider.stage}}api.givesrewards.com/account/accounts
+       # GLOBAL
+      RDS_PROXY_ENDPOINT_GLOBAL: ${self:custom.rds_proxy_global}
+      RDS_IAM_USER_GLOBAL: rds_proxy_${self:provider.stage}_glbl
+      RDS_DATABASE_GLOBAL: bbglobal
+      RDS_TEST: = ${self:custom.rds_test}
+      # FI
+      RDS_PROXY_FI_ENDPOINT: ${self:custom.rds_proxy_fi}
+      RDS_IAM_USER_FI: rds_proxy_${self:provider.stage}_fi
+      RDS_DATABASE_FI: bbfi
+      # CLR/REWARD
+      RDS_PROXY_ENDPOINT_REWARD: ${self:custom.rds_proxy_reward}
+      RDS_IAM_USER_REWARD:  rds_proxy_${self:provider.stage}_clr
+      RDS_DATABASE_REWARD: buzz_reward
+      SECRETNAME: ${self:provider.stage}/sqs/key
+
+custom:
+  serviceName: member-info
+  
+  aws_id:
+    dev: "459587843023"
+    qa: "459587843023"
+    stg: "127301922222"
+    prod: "127301922222"
+
+  points:
+    dev: "dev."
+    qa: "qa."
+    stg: "stg."
+    prod: ""
+
+  loggingLevel:
+    dev:  "debug"
+    qa:   "debug"
+    stg:  "debug"
+    prod: "debug"
+
+  authorizer: ${file(serverless.common.yml):authorizer}
+  rds_proxy_fi: ${file(serverless.common.yml):rds_proxy_fi}
+  rds_proxy_global: ${file(serverless.common.yml):rds_proxy_global}
+  rds_proxy_reward: ${file(serverless.common.yml):rds_proxy_clr}
+  rds_test: ${ssm:/${self:provider.stage}/${self:provider.region}/id}
+
+  customDomain: ${file(serverless.common.yml):customDomain}
+  customDomainName: ${file(serverless.common.yml):customDomainName}
+  customCertificateName: ${file(serverless.common.yml):customCertificateName}
+
+functions:
+  getPointBalanceHandler:
+    handler: controller/points.getPointBalanceHandler
+    events:
+      - http:
+          path: /points/balance
+          method: GET
+          cors:
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agen
+          authorizer:
+            arn:  ${self:custom.authorizer}
+            type: token
+            identitySource: method.request.header.Authorization
+            managedExternally: false
+            resultTtlInSeconds: 0
+
+  getAccountsHandler:
+    handler: controller/accounts.getAccountsHandler
+    events:
+      - http:
+          path: /accounts/{lifeuserid}
+          method: GET
+          cors:
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agen
+          authorizer:
+            arn:  ${self:custom.authorizer}
+            type: token
+            identitySource: method.request.header.Authorization
+            managedExternally: false
+            resultTtlInSeconds: 0
+    
+  getFiSettings:
+    handler: controller/fi-settings.getFiSettingsHandler
+    events:
+      - http:
+          path: /fisettings/{fi}
+          method: GET
+          cors:
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+          authorizer:
+            arn:  ${self:custom.authorizer}
+            type: token
+            identitySource: method.request.header.Authorization
+            managedExternally: false
+            resultTtlInSeconds: 0
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+       - dynamodb:Query
+       - dynamodb:Scan
+       - dynamodb:GetItem
+       - dynamodb:PutItem
+       - dynamodb:UpdateItem
+       - dynamodb:DeleteItem
+      Resource: [ "arn:aws:dynamodb:${self:provider.region}:${self:custom.aws_id.${self:provider.stage}}:table/fi-settings" ]
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX: ${file(serverless.common.yml):GatewayResponseDefault4XX}
+    GatewayResponseDefault5XX: ${file(serverless.common.yml):GatewayResponseDefault5XX}
+
+package:
+  exclude:
+    - .github/**
+
+plugins:
+  - serverless-domain-manager
+  - serverless-iam-roles-per-function
+  - serverless-aws-alias
+  - serverless-jest-plugin

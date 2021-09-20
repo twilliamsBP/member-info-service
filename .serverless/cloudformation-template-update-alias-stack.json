@@ -1,0 +1,282 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Alias stack for member-info-api-stg (stg)",
+  "Resources": {
+    "ServerlessAliasLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/serverless/member-info-api-stg-stg",
+        "RetentionInDays": 7
+      }
+    },
+    "GetPointBalanceHandlerAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetPointBalanceHandler-LambdaFunctionArn"
+        },
+        "FunctionVersion": {
+          "Fn::GetAtt": [
+            "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4",
+            "Version"
+          ]
+        },
+        "Name": "stg"
+      },
+      "DependsOn": [
+        "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4"
+      ]
+    },
+    "GetAccountsHandlerAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetAccountsHandler-LambdaFunctionArn"
+        },
+        "FunctionVersion": {
+          "Fn::GetAtt": [
+            "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60",
+            "Version"
+          ]
+        },
+        "Name": "stg"
+      },
+      "DependsOn": [
+        "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60"
+      ]
+    },
+    "GetFiSettingsAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetFiSettings-LambdaFunctionArn"
+        },
+        "FunctionVersion": {
+          "Fn::GetAtt": [
+            "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY",
+            "Version"
+          ]
+        },
+        "Name": "stg"
+      },
+      "DependsOn": [
+        "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY"
+      ]
+    },
+    "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetPointBalanceHandler-LambdaFunctionArn"
+        },
+        "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+      }
+    },
+    "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetAccountsHandler-LambdaFunctionArn"
+        },
+        "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+      }
+    },
+    "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetFiSettings-LambdaFunctionArn"
+        },
+        "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+      }
+    },
+    "ApiGatewayDeployment1631990784133": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "RestApiId": {
+          "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+        }
+      },
+      "DependsOn": []
+    },
+    "ApiGatewayStage": {
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "StageName": "stg",
+        "DeploymentId": {
+          "Ref": "ApiGatewayDeployment1631990784133"
+        },
+        "RestApiId": {
+          "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+        },
+        "Variables": {
+          "SERVERLESS_ALIAS": "stg",
+          "SERVERLESS_STAGE": "stg"
+        },
+        "Description": "Alias stage 'stg' for member-info-api"
+      },
+      "DependsOn": [
+        "ApiGatewayDeployment1631990784133"
+      ]
+    },
+    "GetPointBalanceHandlerLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetPointBalanceHandlerAlias"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      },
+      "DependsOn": [
+        "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4",
+        "GetPointBalanceHandlerAlias"
+      ]
+    },
+    "AuthorizerLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": "arn:aws:lambda:us-east-1:127301922222:function:authorizer-api-stg-authorizer",
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com"
+      },
+      "DependsOn": []
+    },
+    "GetAccountsHandlerLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetAccountsHandlerAlias"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      },
+      "DependsOn": [
+        "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60",
+        "GetAccountsHandlerAlias"
+      ]
+    },
+    "GetFiSettingsLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetFiSettingsAlias"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      },
+      "DependsOn": [
+        "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY",
+        "GetFiSettingsAlias"
+      ]
+    }
+  },
+  "Outputs": {
+    "ServerlessAliasName": {
+      "Description": "Alias the stack represents.",
+      "Value": "stg"
+    },
+    "ServerlessAliasLogGroup": {
+      "Description": "Log group for alias.",
+      "Value": {
+        "Ref": "ServerlessAliasLogGroup"
+      },
+      "Export": {
+        "Name": "member-info-api-stg-stg-LogGroup"
+      }
+    },
+    "AliasFlags": {
+      "Description": "Alias flags.",
+      "Value": "{\"hasRole\":false}"
+    },
+    "AliasResources": {
+      "Description": "Custom resource references",
+      "Value": "[\"GatewayResponseDefault4XX\",\"GatewayResponseDefault5XX\"]"
+    },
+    "AliasOutputs": {
+      "Description": "Custom output references",
+      "Value": "[]"
+    },
+    "ServerlessAliasReference": {
+      "Description": "Alias stack reference.",
+      "Value": {
+        "Fn::ImportValue": "member-info-api-stg-ServerlessAliasReference"
+      }
+    }
+  }
+}

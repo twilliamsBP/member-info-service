@@ -1,0 +1,30 @@
+ #### Action metadata file ###
+# Docker actions require a metadata file(yml file). 
+# The metadata file defines the inputs, outputs and main entrypoint for the action.
+
+name: 'Serverless Framework'
+description: 'Wraps the Serverless Framework to enable common sls commands, 
+              let us specify which version of serverless to use, support plugins'
+inputs:
+  sls-version:  
+    description: 'Serverless Framework Version'
+    required: true
+    default: 'latest'
+  plugins:   
+    description: 'Serverless Framework Plugins'
+    required: false
+  stage:  
+    description: 'Serverless stage'
+    required: true
+
+outputs:
+  version: 
+    description: 'The serverless version'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    STAGE: ${{ inputs.stage }}
+    SLS_VERSION: ${{ inputs.sls-version }}
+    PLUGINS: ${{ inputs.plugins }}

@@ -1,0 +1,127 @@
+service: ${self:custom.serviceName}-api
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  profile: buzzprod
+  stage: ${opt:stage, 'dev'} 
+  timeout: 30
+  iamRoleStatements: 
+    - Effect: Allow
+      Action:
+        - ec2:CreateNetworkInterface
+        - ec2:DeleteNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DetachNetworkInterface
+        - ec2:DescribeSecurityGroups
+        - e2:DescribeSubnets
+        - ec2:DescribeVpcs
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - rds-db:connect
+      Resource: 
+        - arn:aws:rds-db:us-east-1:127301922222:dbuser:prx-0d3c8a316f65f5fe5/rds_proxy_${self:provider.stage}_fi
+        - '*'
+        - arn:aws:rds-db:us-east-1:127301922222:dbuser:db-J44O6RDJIER44PASZGY52WQSSU/rds_proxy_${self:provider.stage}_reward
+        - arn:aws:rds-db:us-east-1:127301922222:dbuser:db-F5L3XUVV7XS346HS3M3BTSFDAI/rds_proxy_${self:provider.stage}_glbl
+       
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetResourcePolicy
+        - secretsmanager:GetSecretValue
+        - secretsmanager:DescribeSecret
+        - secretsmanager:ListSecretVersionIds
+      Resource: arn:aws:secretsmanager:us-east-1:127301922222:secret:stg_rds_proxy-0i52C8
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetRandomPassword
+        - secretsmanager:ListSecrets
+      Resource: "*"
+
+# plugins:
+#  - serverless-domain-manager
+  environment:
+      LOGGING_LEVEL: ${self:custom.loggingLevel.${self:provider.stage}}
+      REGION: us-east-1
+       # GLOBAL
+      RDS_PROXY_ENDPOINT_GLOBAL: ${self:custom.rds_proxy_global}
+      RDS_IAM_USER_GLOBAL: rds_proxy_${self:provider.stage}_glbl
+      RDS_DATABASE_GLOBAL: bbglobal
+      # FI
+      RDS_PROXY_FI_ENDPOINT: ${self:custom.rds_proxy_fi}
+      RDS_IAM_USER_FI: rds_proxy_${self:provider.stage}_fi
+      RDS_DATABASE_FI: bbfi
+      # CLR/REWARD
+      RDS_PROXY_ENDPOINT_REWARD: ${self:custom.rds_proxy_reward}
+      RDS_IAM_USER_REWARD: ${self:custom.user.${self:provider.stage}}
+      RDS_DATABASE_REWARD: buzz_reward
+ #     RDS_PROXY_ENDPOINT: ${self:custom.rds_proxy_fi}
+ #     RDS_IAM_USER: rds_proxy_${self:provider.stage}_fi
+ #     RDS_DATABASE: bbfi
+ #     RDS_PROXY_ENDPOINT_REWARD: ${self:custom.rds_proxy_reward}
+ #     RDS_IAM_USER_REWARD: ${self:custom.user.${self:provider.stage}}
+ #     RDS_DATABASE_REWARD: buzz_reward
+ #     RDS_PROXY_ENDPOINT_GLOBAL: ${self:custom.rds_proxy_global}
+ #     RDS_DATABASE_GLOBAL: bbglobal
+ #     RDS_IAM_USER_GLOBAL: rds_proxy_${self:provider.stage}_glbl
+ #     RDS_PROXY_FI_ENDPOINT: ${self:custom.rds_proxy_fi}
+ #     RDS_IAM_USER_FI: rds_proxy_${self:provider.stage}_fi
+ #     RDS_DATABASE_FI: bbfi
+custom:
+  serviceName: account
+  loggingLevel:
+    dev:  "debug"
+    stg:  "debug"
+    prod: "debug"
+  proxyPart: 
+    dev:  "cfaaiz0gvron"
+    stg:  "cqscgqylfsoo"
+    prod: "cqscgqylfsoo"
+  user:
+    dev:  "rds_proxy_dev_clr"
+    stg:  "rds_proxy_stg_reward"
+    prod: "rds_proxy_prod_clr"
+
+
+ # authorizer: arn:aws:lambda:${self:provider.region}:${ssm:/${self:provider.stage}/account/id}:function:authorizer-api-${self:provider.stage}-authorizer
+  authorizer: arn:aws:lambda:${self:provider.region}:127301922222:function:authorizer-api-${self:provider.stage}-authorizer
+ # rds_proxy_fi: rds-proxy-${self:provider.stage}-fi00.proxy-${ssm:/${self:provider.stage}/${self:provider.region}/id}.${self:provider.region}.rds.amazonaws.com
+  rds_proxy_fi: rds-proxy-${self:provider.stage}-fi.proxy-${self:custom.proxyPart.${self:provider.stage}}.${self:provider.region}.rds.amazonaws.com
+ # rds-proxy-dev-fi.proxy-cfaaiz0gvron.us-east-1.rds.amazonaws.com
+ # rds_proxy_global: rds-proxy-${self:provider.stage}-glbl.proxy-${ssm:/${self:provider.stage}/${self:provider.region}/id}.${self:provider.region}.rds.amazonaws.com
+  rds_proxy_global: rds-proxy-${self:provider.stage}-glbl.proxy-${self:custom.proxyPart.${self:provider.stage}}.${self:provider.region}.rds.amazonaws.com
+ # rds_proxy_reward: rds-proxy-${self:provider.stage}-clr.proxy-${ssm:/${self:provider.stage}/${self:provider.region}/id}.${self:provider.region}.rds.amazonaws.com
+  rds_proxy_reward: rds-proxy-${self:provider.stage}-clr.proxy-${self:custom.proxyPart.${self:provider.stage}}.${self:provider.region}.rds.amazonaws.com
+
+
+
+functions:
+  listRedemptions:
+    handler: controller/redemptionList.listRedemptions
+    events:
+      - http:
+          path: rewards/redemptions
+          method: GET
+          cors:
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          authorizer:
+            arn: ${self:custom.authorizer}
+            type: token
+            identitySource: method.request.header.Authorization
+            managedExternally: false
+            resultTtlInSeconds: 0
+    vpc:
+      securityGroupIds:
+        - sg-049ce15cb29ba60b3
+      subnetIds:
+        - subnet-0ce2554ddffbdcbfa
+        - subnet-08b3623414a746596

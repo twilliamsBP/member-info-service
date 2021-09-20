@@ -1,2 +1,2 @@
-# member-info-service
-Member Info service that will be used by Travel rewards
+# fi-settings-service
+Service that returns the requested travel settings in accordance with the travelCTM GetMemberInfo API.  
