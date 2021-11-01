@@ -9,6 +9,24 @@
         "RetentionInDays": 7
       }
     },
+    "GetMemberInfoAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetMemberInfo-LambdaFunctionArn"
+        },
+        "FunctionVersion": {
+          "Fn::GetAtt": [
+            "GetMemberInfoLambdaVersion2Ro2QP7us37MO0mFbX5DmDNB5moTki8YivAyKyDFys",
+            "Version"
+          ]
+        },
+        "Name": "stg"
+      },
+      "DependsOn": [
+        "GetMemberInfoLambdaVersion2Ro2QP7us37MO0mFbX5DmDNB5moTki8YivAyKyDFys"
+      ]
+    },
     "GetPointBalanceHandlerAlias": {
       "Type": "AWS::Lambda::Alias",
       "Properties": {
@@ -17,14 +35,32 @@
         },
         "FunctionVersion": {
           "Fn::GetAtt": [
-            "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4",
+            "GetPointBalanceHandlerLambdaVersions1q0aRiEj76JFfXP8J6iq986iV46wp2whgQ7uSHGoE",
             "Version"
           ]
         },
         "Name": "stg"
       },
       "DependsOn": [
-        "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4"
+        "GetPointBalanceHandlerLambdaVersions1q0aRiEj76JFfXP8J6iq986iV46wp2whgQ7uSHGoE"
+      ]
+    },
+    "GetPointBalanceByUserHandlerAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetPointBalanceByUserHandler-LambdaFunctionArn"
+        },
+        "FunctionVersion": {
+          "Fn::GetAtt": [
+            "GetPointBalanceByUserHandlerLambdaVersionomqLzMQKiAqomIAyhBuIVPCJHP9Ykeg7Oa0XOpug",
+            "Version"
+          ]
+        },
+        "Name": "stg"
+      },
+      "DependsOn": [
+        "GetPointBalanceByUserHandlerLambdaVersionomqLzMQKiAqomIAyhBuIVPCJHP9Ykeg7Oa0XOpug"
       ]
     },
     "GetAccountsHandlerAlias": {
@@ -35,14 +71,32 @@
         },
         "FunctionVersion": {
           "Fn::GetAtt": [
-            "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60",
+            "GetAccountsHandlerLambdaVersionWtR229y7haPu83DiQ6Opbff8Iv63SJTOsg7VT4UIGbY",
             "Version"
           ]
         },
         "Name": "stg"
       },
       "DependsOn": [
-        "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60"
+        "GetAccountsHandlerLambdaVersionWtR229y7haPu83DiQ6Opbff8Iv63SJTOsg7VT4UIGbY"
+      ]
+    },
+    "GetAccountsByUserHandlerAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetAccountsByUserHandler-LambdaFunctionArn"
+        },
+        "FunctionVersion": {
+          "Fn::GetAtt": [
+            "GetAccountsByUserHandlerLambdaVersionJD146waoILQVR4ITj9QzEC1orZBf5KNp3Q4yuodSA",
+            "Version"
+          ]
+        },
+        "Name": "stg"
+      },
+      "DependsOn": [
+        "GetAccountsByUserHandlerLambdaVersionJD146waoILQVR4ITj9QzEC1orZBf5KNp3Q4yuodSA"
       ]
     },
     "GetFiSettingsAlias": {
@@ -53,47 +107,77 @@
         },
         "FunctionVersion": {
           "Fn::GetAtt": [
-            "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY",
+            "GetFiSettingsLambdaVersiong27uojqibfdVQnojqHxawBqcL2CmgoQmELrAXJKQ",
             "Version"
           ]
         },
         "Name": "stg"
       },
       "DependsOn": [
-        "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY"
+        "GetFiSettingsLambdaVersiong27uojqibfdVQnojqHxawBqcL2CmgoQmELrAXJKQ"
       ]
     },
-    "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4": {
+    "GetMemberInfoLambdaVersion2Ro2QP7us37MO0mFbX5DmDNB5moTki8YivAyKyDFys": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetMemberInfo-LambdaFunctionArn"
+        },
+        "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
+      }
+    },
+    "GetPointBalanceHandlerLambdaVersions1q0aRiEj76JFfXP8J6iq986iV46wp2whgQ7uSHGoE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Delete",
       "Properties": {
         "FunctionName": {
           "Fn::ImportValue": "member-info-api-stg-GetPointBalanceHandler-LambdaFunctionArn"
         },
-        "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+        "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
       }
     },
-    "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60": {
+    "GetPointBalanceByUserHandlerLambdaVersionomqLzMQKiAqomIAyhBuIVPCJHP9Ykeg7Oa0XOpug": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetPointBalanceByUserHandler-LambdaFunctionArn"
+        },
+        "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
+      }
+    },
+    "GetAccountsHandlerLambdaVersionWtR229y7haPu83DiQ6Opbff8Iv63SJTOsg7VT4UIGbY": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Delete",
       "Properties": {
         "FunctionName": {
           "Fn::ImportValue": "member-info-api-stg-GetAccountsHandler-LambdaFunctionArn"
         },
-        "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+        "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
       }
     },
-    "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY": {
+    "GetAccountsByUserHandlerLambdaVersionJD146waoILQVR4ITj9QzEC1orZBf5KNp3Q4yuodSA": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "FunctionName": {
+          "Fn::ImportValue": "member-info-api-stg-GetAccountsByUserHandler-LambdaFunctionArn"
+        },
+        "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
+      }
+    },
+    "GetFiSettingsLambdaVersiong27uojqibfdVQnojqHxawBqcL2CmgoQmELrAXJKQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Delete",
       "Properties": {
         "FunctionName": {
           "Fn::ImportValue": "member-info-api-stg-GetFiSettings-LambdaFunctionArn"
         },
-        "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+        "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
       }
     },
-    "ApiGatewayDeployment1631990784133": {
+    "ApiGatewayDeployment1633103625294": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -107,7 +191,7 @@
       "Properties": {
         "StageName": "stg",
         "DeploymentId": {
-          "Ref": "ApiGatewayDeployment1631990784133"
+          "Ref": "ApiGatewayDeployment1633103625294"
         },
         "RestApiId": {
           "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
@@ -119,7 +203,45 @@
         "Description": "Alias stage 'stg' for member-info-api"
       },
       "DependsOn": [
-        "ApiGatewayDeployment1631990784133"
+        "ApiGatewayDeployment1633103625294"
+      ]
+    },
+    "GetMemberInfoLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetMemberInfoAlias"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      },
+      "DependsOn": [
+        "GetMemberInfoLambdaVersion2Ro2QP7us37MO0mFbX5DmDNB5moTki8YivAyKyDFys",
+        "GetMemberInfoAlias"
       ]
     },
     "GetPointBalanceHandlerLambdaPermissionApiGateway": {
@@ -156,7 +278,7 @@
         }
       },
       "DependsOn": [
-        "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4",
+        "GetPointBalanceHandlerLambdaVersions1q0aRiEj76JFfXP8J6iq986iV46wp2whgQ7uSHGoE",
         "GetPointBalanceHandlerAlias"
       ]
     },
@@ -168,6 +290,44 @@
         "Principal": "apigateway.amazonaws.com"
       },
       "DependsOn": []
+    },
+    "GetPointBalanceByUserHandlerLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetPointBalanceByUserHandlerAlias"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      },
+      "DependsOn": [
+        "GetPointBalanceByUserHandlerLambdaVersionomqLzMQKiAqomIAyhBuIVPCJHP9Ykeg7Oa0XOpug",
+        "GetPointBalanceByUserHandlerAlias"
+      ]
     },
     "GetAccountsHandlerLambdaPermissionApiGateway": {
       "Type": "AWS::Lambda::Permission",
@@ -203,8 +363,46 @@
         }
       },
       "DependsOn": [
-        "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60",
+        "GetAccountsHandlerLambdaVersionWtR229y7haPu83DiQ6Opbff8Iv63SJTOsg7VT4UIGbY",
         "GetAccountsHandlerAlias"
+      ]
+    },
+    "GetAccountsByUserHandlerLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetAccountsByUserHandlerAlias"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::ImportValue": "member-info-api-stg-ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      },
+      "DependsOn": [
+        "GetAccountsByUserHandlerLambdaVersionJD146waoILQVR4ITj9QzEC1orZBf5KNp3Q4yuodSA",
+        "GetAccountsByUserHandlerAlias"
       ]
     },
     "GetFiSettingsLambdaPermissionApiGateway": {
@@ -241,7 +439,7 @@
         }
       },
       "DependsOn": [
-        "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY",
+        "GetFiSettingsLambdaVersiong27uojqibfdVQnojqHxawBqcL2CmgoQmELrAXJKQ",
         "GetFiSettingsAlias"
       ]
     }

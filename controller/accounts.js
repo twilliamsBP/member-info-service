@@ -1,6 +1,5 @@
-const { getAccounts } = require('../service/account-service')
+const { getAccounts, getAccountsByUser } = require('../service/account-service')
 const { createErrorResponse, createSuccessPayloadResponse } = require('./responsewrapper');
-const { closeGlobalConnection } = require('../database/db')
 const log4js = require("log4js");
 const logger = log4js.getLogger();
 
@@ -24,10 +23,31 @@ const getAccountsHandler = async (event) => {
     } catch (error) {
         logger.error(error)
         return createErrorResponse(error, 500)
-    } finally {
-        await closeGlobalConnection();
-    }
+    } 
 
 }
 
-module.exports = { getAccountsHandler };
+const getAccountsByUserHandler = async (event) => {
+
+    try {
+        const { lifeuserid } = event.pathParameters;
+        
+        logger.debug(` lifeuserid ${lifeuserid} `);
+      
+        let _accounts = await getAccountsByUser(lifeuserid);
+
+        logger.debug(` accounts ${JSON.stringify(_accounts)} `)
+       
+        let rtnVal = {
+            accounts: _accounts
+        }
+
+        return createSuccessPayloadResponse(rtnVal, 200)
+    } catch (error) {
+        logger.error(error)
+        return createErrorResponse(error, 500)
+    } 
+
+}
+
+module.exports = { getAccountsHandler, getAccountsByUserHandler };

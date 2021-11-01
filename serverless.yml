@@ -26,7 +26,9 @@ provider:
       LOGGING_LEVEL: ${self:custom.loggingLevel.${self:provider.stage}}
       REGION: ${self:provider.region}
       GET_LIFEUSER_POINTS: https://${self:custom.points.${self:provider.stage}}api.givesrewards.com/points
+      GET_LIFEUSER_POINTS_USER: https://${self:custom.points.${self:provider.stage}}api.givesrewards.com/points/user/
       GET_LIFEUSER_ACCOUNTS: https://${self:custom.points.${self:provider.stage}}api.givesrewards.com/account/accounts
+      GET_LIFEUSER_ACCOUNTS_USER: https://${self:custom.points.${self:provider.stage}}api.givesrewards.com/account/accounts/user/
        # GLOBAL
       RDS_PROXY_ENDPOINT_GLOBAL: ${self:custom.rds_proxy_global}
       RDS_IAM_USER_GLOBAL: rds_proxy_${self:provider.stage}_glbl
@@ -74,6 +76,37 @@ custom:
   customCertificateName: ${file(serverless.common.yml):customCertificateName}
 
 functions:
+  getMemberInfo:
+    handler: controller/member-info.getMemberInfo
+    events:
+      - http:
+          path: /memberinfo/{lifeuserid}
+          method: GET
+          cors:
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+        #  authorizer:
+        #    arn:  ${self:custom.authorizer}
+       #     type: token
+       #     identitySource: method.request.header.Authorization
+       #     managedExternally: false
+       #     resultTtlInSeconds: 0
+    iamRoleStatements:
+    - Effect: Allow
+      Action:
+       - dynamodb:Query
+       - dynamodb:Scan
+       - dynamodb:GetItem
+       - dynamodb:PutItem
+       - dynamodb:UpdateItem
+       - dynamodb:DeleteItem
+      Resource: [ "arn:aws:dynamodb:${self:provider.region}:${self:custom.aws_id.${self:provider.stage}}:table/fi-settings" ]
+          
   getPointBalanceHandler:
     handler: controller/points.getPointBalanceHandler
     events:
@@ -95,11 +128,26 @@ functions:
             managedExternally: false
             resultTtlInSeconds: 0
 
+  getPointBalanceByUserHandler:
+    handler: controller/points.getPointBalanceByUserHandler
+    events:
+      - http:
+          path: /points/balance/user/{lifeuserid}
+          method: GET
+          cors:
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agen
+
   getAccountsHandler:
     handler: controller/accounts.getAccountsHandler
     events:
       - http:
-          path: /accounts/{lifeuserid}
+          path: /accounts
           method: GET
           cors:
             origin: '*' # <-- Specify allowed origin
@@ -115,7 +163,22 @@ functions:
             identitySource: method.request.header.Authorization
             managedExternally: false
             resultTtlInSeconds: 0
-    
+
+  getAccountsByUserHandler:
+    handler: controller/accounts.getAccountsByUserHandler
+    events:
+      - http:
+          path: /accounts/user/{lifeuserid}
+          method: GET
+          cors:
+            origin: '*' # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+          
   getFiSettings:
     handler: controller/fi-settings.getFiSettingsHandler
     events:

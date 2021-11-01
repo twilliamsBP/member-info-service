@@ -33,4 +33,30 @@ const getPoints = async (userToken) => {
   
   }
 
-  module.exports = { getPoints }
+  const getPointsByUser = async (lifeuserid) => {
+
+    let points
+  
+
+    const pointsApi = `${process.env.GET_LIFEUSER_POINTS_USER}${lifeuserid}`
+    logger.debug(` pointsApi ${pointsApi} `)
+  
+    try {
+  
+      const response = await needle('get', pointsApi)
+      if (response.statusCode !== 200) {
+        logger.error(`failed retrieving latest snapshot from ${pointsApi}: ${response.statusCode}`);
+        throw new Error('failed on retrieval of total points for user ');
+      }
+  
+      points = response.body.totalPoints
+  
+    } catch (err) { logger.error(err) }
+  
+  
+    return points
+  
+  }
+
+
+  module.exports = { getPoints, getPointsByUser }

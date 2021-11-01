@@ -33,7 +33,9 @@
         "LOGGING_LEVEL": "debug",
         "REGION": "us-east-1",
         "GET_LIFEUSER_POINTS": "https://stg.api.givesrewards.com/points",
+        "GET_LIFEUSER_POINTS_USER": "https://stg.api.givesrewards.com/points/user/",
         "GET_LIFEUSER_ACCOUNTS": "https://stg.api.givesrewards.com/account/accounts",
+        "GET_LIFEUSER_ACCOUNTS_USER": "https://stg.api.givesrewards.com/account/accounts/user/",
         "RDS_PROXY_ENDPOINT_GLOBAL": "rds-proxy-stg-glbl.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
         "RDS_IAM_USER_GLOBAL": "rds_proxy_stg_glbl",
         "RDS_DATABASE_GLOBAL": "bbglobal",
@@ -57,6 +59,13 @@
         "AWSTemplateFormatVersion": "2010-09-09",
         "Description": "The AWS CloudFormation template for this Serverless application",
         "Resources": {
+          "GetMemberInfoLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/member-info-api-stg-getMemberInfo",
+              "RetentionInDays": 30
+            }
+          },
           "GetPointBalanceHandlerLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
@@ -64,10 +73,24 @@
               "RetentionInDays": 30
             }
           },
+          "GetPointBalanceByUserHandlerLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/member-info-api-stg-getPointBalanceByUserHandler",
+              "RetentionInDays": 30
+            }
+          },
           "GetAccountsHandlerLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/member-info-api-stg-getAccountsHandler",
+              "RetentionInDays": 30
+            }
+          },
+          "GetAccountsByUserHandlerLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/member-info-api-stg-getAccountsByUserHandler",
               "RetentionInDays": 30
             }
           },
@@ -169,12 +192,75 @@
               ]
             }
           },
+          "GetMemberInfoLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "buzz-serverless-stg",
+                "S3Key": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z/member-info-api.zip"
+              },
+              "FunctionName": "member-info-api-stg-getMemberInfo",
+              "Handler": "controller/member-info.getMemberInfo",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": [
+                  "GetMemberInfoIamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "nodejs12.x",
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "LOGGING_LEVEL": "debug",
+                  "REGION": "us-east-1",
+                  "GET_LIFEUSER_POINTS": "https://stg.api.givesrewards.com/points",
+                  "GET_LIFEUSER_POINTS_USER": "https://stg.api.givesrewards.com/points/user/",
+                  "GET_LIFEUSER_ACCOUNTS": "https://stg.api.givesrewards.com/account/accounts",
+                  "GET_LIFEUSER_ACCOUNTS_USER": "https://stg.api.givesrewards.com/account/accounts/user/",
+                  "RDS_PROXY_ENDPOINT_GLOBAL": "rds-proxy-stg-glbl.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_GLOBAL": "rds_proxy_stg_glbl",
+                  "RDS_DATABASE_GLOBAL": "bbglobal",
+                  "RDS_TEST": "= cqscgqylfsoo",
+                  "RDS_PROXY_FI_ENDPOINT": "rds-proxy-stg-fi.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_FI": "rds_proxy_stg_fi",
+                  "RDS_DATABASE_FI": "bbfi",
+                  "RDS_PROXY_ENDPOINT_REWARD": "rds-proxy-stg-clr.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_REWARD": "rds_proxy_stg_clr",
+                  "RDS_DATABASE_REWARD": "buzz_reward",
+                  "SECRETNAME": "stg/sqs/key"
+                }
+              },
+              "VpcConfig": {
+                "SecurityGroupIds": {
+                  "$ref": "$[\"service\"][\"provider\"][\"vpc\"][\"securityGroupIds\"]"
+                },
+                "SubnetIds": {
+                  "$ref": "$[\"service\"][\"provider\"][\"vpc\"][\"subnetIds\"]"
+                }
+              }
+            },
+            "DependsOn": [
+              "GetMemberInfoIamRoleLambdaExecution",
+              "GetMemberInfoLogGroup"
+            ]
+          },
+          "GetMemberInfoLambdaVersion2Ro2QP7us37MO0mFbX5DmDNB5moTki8YivAyKyDFys": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetMemberInfoLambdaFunction"
+              },
+              "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
+            }
+          },
           "GetPointBalanceHandlerLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": "buzz-serverless-stg",
-                "S3Key": "serverless/member-info-api/stg/1631990812226-2021-09-18T18:46:52.226Z/member-info-api.zip"
+                "S3Key": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z/member-info-api.zip"
               },
               "FunctionName": "member-info-api-stg-getPointBalanceHandler",
               "Handler": "controller/points.getPointBalanceHandler",
@@ -192,7 +278,9 @@
                   "LOGGING_LEVEL": "debug",
                   "REGION": "us-east-1",
                   "GET_LIFEUSER_POINTS": "https://stg.api.givesrewards.com/points",
+                  "GET_LIFEUSER_POINTS_USER": "https://stg.api.givesrewards.com/points/user/",
                   "GET_LIFEUSER_ACCOUNTS": "https://stg.api.givesrewards.com/account/accounts",
+                  "GET_LIFEUSER_ACCOUNTS_USER": "https://stg.api.givesrewards.com/account/accounts/user/",
                   "RDS_PROXY_ENDPOINT_GLOBAL": "rds-proxy-stg-glbl.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
                   "RDS_IAM_USER_GLOBAL": "rds_proxy_stg_glbl",
                   "RDS_DATABASE_GLOBAL": "bbglobal",
@@ -220,14 +308,77 @@
               "IamRoleLambdaExecution"
             ]
           },
-          "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4": {
+          "GetPointBalanceHandlerLambdaVersions1q0aRiEj76JFfXP8J6iq986iV46wp2whgQ7uSHGoE": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetPointBalanceHandlerLambdaFunction"
               },
-              "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+              "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
+            }
+          },
+          "GetPointBalanceByUserHandlerLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "buzz-serverless-stg",
+                "S3Key": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z/member-info-api.zip"
+              },
+              "FunctionName": "member-info-api-stg-getPointBalanceByUserHandler",
+              "Handler": "controller/points.getPointBalanceByUserHandler",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "nodejs12.x",
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "LOGGING_LEVEL": "debug",
+                  "REGION": "us-east-1",
+                  "GET_LIFEUSER_POINTS": "https://stg.api.givesrewards.com/points",
+                  "GET_LIFEUSER_POINTS_USER": "https://stg.api.givesrewards.com/points/user/",
+                  "GET_LIFEUSER_ACCOUNTS": "https://stg.api.givesrewards.com/account/accounts",
+                  "GET_LIFEUSER_ACCOUNTS_USER": "https://stg.api.givesrewards.com/account/accounts/user/",
+                  "RDS_PROXY_ENDPOINT_GLOBAL": "rds-proxy-stg-glbl.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_GLOBAL": "rds_proxy_stg_glbl",
+                  "RDS_DATABASE_GLOBAL": "bbglobal",
+                  "RDS_TEST": "= cqscgqylfsoo",
+                  "RDS_PROXY_FI_ENDPOINT": "rds-proxy-stg-fi.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_FI": "rds_proxy_stg_fi",
+                  "RDS_DATABASE_FI": "bbfi",
+                  "RDS_PROXY_ENDPOINT_REWARD": "rds-proxy-stg-clr.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_REWARD": "rds_proxy_stg_clr",
+                  "RDS_DATABASE_REWARD": "buzz_reward",
+                  "SECRETNAME": "stg/sqs/key"
+                }
+              },
+              "VpcConfig": {
+                "SecurityGroupIds": {
+                  "$ref": "$[\"service\"][\"provider\"][\"vpc\"][\"securityGroupIds\"]"
+                },
+                "SubnetIds": {
+                  "$ref": "$[\"service\"][\"provider\"][\"vpc\"][\"subnetIds\"]"
+                }
+              }
+            },
+            "DependsOn": [
+              "GetPointBalanceByUserHandlerLogGroup",
+              "IamRoleLambdaExecution"
+            ]
+          },
+          "GetPointBalanceByUserHandlerLambdaVersionomqLzMQKiAqomIAyhBuIVPCJHP9Ykeg7Oa0XOpug": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetPointBalanceByUserHandlerLambdaFunction"
+              },
+              "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
             }
           },
           "GetAccountsHandlerLambdaFunction": {
@@ -235,7 +386,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "buzz-serverless-stg",
-                "S3Key": "serverless/member-info-api/stg/1631990812226-2021-09-18T18:46:52.226Z/member-info-api.zip"
+                "S3Key": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z/member-info-api.zip"
               },
               "FunctionName": "member-info-api-stg-getAccountsHandler",
               "Handler": "controller/accounts.getAccountsHandler",
@@ -253,7 +404,9 @@
                   "LOGGING_LEVEL": "debug",
                   "REGION": "us-east-1",
                   "GET_LIFEUSER_POINTS": "https://stg.api.givesrewards.com/points",
+                  "GET_LIFEUSER_POINTS_USER": "https://stg.api.givesrewards.com/points/user/",
                   "GET_LIFEUSER_ACCOUNTS": "https://stg.api.givesrewards.com/account/accounts",
+                  "GET_LIFEUSER_ACCOUNTS_USER": "https://stg.api.givesrewards.com/account/accounts/user/",
                   "RDS_PROXY_ENDPOINT_GLOBAL": "rds-proxy-stg-glbl.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
                   "RDS_IAM_USER_GLOBAL": "rds_proxy_stg_glbl",
                   "RDS_DATABASE_GLOBAL": "bbglobal",
@@ -281,14 +434,77 @@
               "IamRoleLambdaExecution"
             ]
           },
-          "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60": {
+          "GetAccountsHandlerLambdaVersionWtR229y7haPu83DiQ6Opbff8Iv63SJTOsg7VT4UIGbY": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetAccountsHandlerLambdaFunction"
               },
-              "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+              "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
+            }
+          },
+          "GetAccountsByUserHandlerLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "buzz-serverless-stg",
+                "S3Key": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z/member-info-api.zip"
+              },
+              "FunctionName": "member-info-api-stg-getAccountsByUserHandler",
+              "Handler": "controller/accounts.getAccountsByUserHandler",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "nodejs12.x",
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "LOGGING_LEVEL": "debug",
+                  "REGION": "us-east-1",
+                  "GET_LIFEUSER_POINTS": "https://stg.api.givesrewards.com/points",
+                  "GET_LIFEUSER_POINTS_USER": "https://stg.api.givesrewards.com/points/user/",
+                  "GET_LIFEUSER_ACCOUNTS": "https://stg.api.givesrewards.com/account/accounts",
+                  "GET_LIFEUSER_ACCOUNTS_USER": "https://stg.api.givesrewards.com/account/accounts/user/",
+                  "RDS_PROXY_ENDPOINT_GLOBAL": "rds-proxy-stg-glbl.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_GLOBAL": "rds_proxy_stg_glbl",
+                  "RDS_DATABASE_GLOBAL": "bbglobal",
+                  "RDS_TEST": "= cqscgqylfsoo",
+                  "RDS_PROXY_FI_ENDPOINT": "rds-proxy-stg-fi.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_FI": "rds_proxy_stg_fi",
+                  "RDS_DATABASE_FI": "bbfi",
+                  "RDS_PROXY_ENDPOINT_REWARD": "rds-proxy-stg-clr.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
+                  "RDS_IAM_USER_REWARD": "rds_proxy_stg_clr",
+                  "RDS_DATABASE_REWARD": "buzz_reward",
+                  "SECRETNAME": "stg/sqs/key"
+                }
+              },
+              "VpcConfig": {
+                "SecurityGroupIds": {
+                  "$ref": "$[\"service\"][\"provider\"][\"vpc\"][\"securityGroupIds\"]"
+                },
+                "SubnetIds": {
+                  "$ref": "$[\"service\"][\"provider\"][\"vpc\"][\"subnetIds\"]"
+                }
+              }
+            },
+            "DependsOn": [
+              "GetAccountsByUserHandlerLogGroup",
+              "IamRoleLambdaExecution"
+            ]
+          },
+          "GetAccountsByUserHandlerLambdaVersionJD146waoILQVR4ITj9QzEC1orZBf5KNp3Q4yuodSA": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetAccountsByUserHandlerLambdaFunction"
+              },
+              "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
             }
           },
           "GetFiSettingsLambdaFunction": {
@@ -296,7 +512,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "buzz-serverless-stg",
-                "S3Key": "serverless/member-info-api/stg/1631990812226-2021-09-18T18:46:52.226Z/member-info-api.zip"
+                "S3Key": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z/member-info-api.zip"
               },
               "FunctionName": "member-info-api-stg-getFiSettings",
               "Handler": "controller/fi-settings.getFiSettingsHandler",
@@ -314,7 +530,9 @@
                   "LOGGING_LEVEL": "debug",
                   "REGION": "us-east-1",
                   "GET_LIFEUSER_POINTS": "https://stg.api.givesrewards.com/points",
+                  "GET_LIFEUSER_POINTS_USER": "https://stg.api.givesrewards.com/points/user/",
                   "GET_LIFEUSER_ACCOUNTS": "https://stg.api.givesrewards.com/account/accounts",
+                  "GET_LIFEUSER_ACCOUNTS_USER": "https://stg.api.givesrewards.com/account/accounts/user/",
                   "RDS_PROXY_ENDPOINT_GLOBAL": "rds-proxy-stg-glbl.proxy-cqscgqylfsoo.us-east-1.rds.amazonaws.com",
                   "RDS_IAM_USER_GLOBAL": "rds_proxy_stg_glbl",
                   "RDS_DATABASE_GLOBAL": "bbglobal",
@@ -342,14 +560,14 @@
               "GetFiSettingsLogGroup"
             ]
           },
-          "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY": {
+          "GetFiSettingsLambdaVersiong27uojqibfdVQnojqHxawBqcL2CmgoQmELrAXJKQ": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetFiSettingsLambdaFunction"
               },
-              "CodeSha256": "iVMTDRnQnH9OBKJIZRNh5y3FJoE93ia7osqHN2KZIuY="
+              "CodeSha256": "xPZsjzAgF4590tdB3u053SBDDXHOU71mHNhzbTe53B4="
             }
           },
           "ApiGatewayRestApi": {
@@ -362,6 +580,33 @@
                 ]
               },
               "Policy": ""
+            }
+          },
+          "ApiGatewayResourceMemberinfo": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "memberinfo",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceMemberinfoLifeuseridVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceMemberinfo"
+              },
+              "PathPart": "{lifeuserid}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
             }
           },
           "ApiGatewayResourcePoints": {
@@ -391,6 +636,30 @@
               }
             }
           },
+          "ApiGatewayResourcePointsBalanceUser": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourcePointsBalance"
+              },
+              "PathPart": "user",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourcePointsBalanceUserLifeuseridVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourcePointsBalanceUser"
+              },
+              "PathPart": "{lifeuserid}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
           "ApiGatewayResourceAccounts": {
             "Type": "AWS::ApiGateway::Resource",
             "Properties": {
@@ -406,11 +675,23 @@
               }
             }
           },
-          "ApiGatewayResourceAccountsLifeuseridVar": {
+          "ApiGatewayResourceAccountsUser": {
             "Type": "AWS::ApiGateway::Resource",
             "Properties": {
               "ParentId": {
                 "Ref": "ApiGatewayResourceAccounts"
+              },
+              "PathPart": "user",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAccountsUserLifeuseridVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceAccountsUser"
               },
               "PathPart": "{lifeuserid}",
               "RestApiId": {
@@ -440,6 +721,51 @@
                 "Ref": "ApiGatewayResourceFisettings"
               },
               "PathPart": "{fi}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodMemberinfoLifeuseridVarOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceMemberinfoLifeuseridVar"
+              },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -490,7 +816,7 @@
               }
             }
           },
-          "ApiGatewayMethodAccountsLifeuseridVarOptions": {
+          "ApiGatewayMethodPointsBalanceUserLifeuseridVarOptions": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "AuthorizationType": "NONE",
@@ -528,7 +854,97 @@
                 ]
               },
               "ResourceId": {
-                "Ref": "ApiGatewayResourceAccountsLifeuseridVar"
+                "Ref": "ApiGatewayResourcePointsBalanceUserLifeuseridVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodAccountsOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agen'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAccounts"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodAccountsUserLifeuseridVarOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAccountsUserLifeuseridVar"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -580,6 +996,49 @@
               }
             }
           },
+          "ApiGatewayMethodMemberinfoLifeuseridVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceMemberinfoLifeuseridVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetMemberInfoLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
           "ApiGatewayMethodPointsBalanceGet": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -627,13 +1086,56 @@
             },
             "DependsOn": "AuthorizerApiGatewayAuthorizer"
           },
-          "ApiGatewayMethodAccountsLifeuseridVarGet": {
+          "ApiGatewayMethodPointsBalanceUserLifeuseridVarGet": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "HttpMethod": "GET",
               "RequestParameters": {},
               "ResourceId": {
-                "Ref": "ApiGatewayResourceAccountsLifeuseridVar"
+                "Ref": "ApiGatewayResourcePointsBalanceUserLifeuseridVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetPointBalanceByUserHandlerLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodAccountsGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAccounts"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -673,6 +1175,49 @@
               "MethodResponses": []
             },
             "DependsOn": "AuthorizerApiGatewayAuthorizer"
+          },
+          "ApiGatewayMethodAccountsUserLifeuseridVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAccountsUserLifeuseridVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetAccountsByUserHandlerLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
           },
           "ApiGatewayMethodFisettingsFiVarGet": {
             "Type": "AWS::ApiGateway::Method",
@@ -751,7 +1296,7 @@
               "Type": "TOKEN"
             }
           },
-          "ApiGatewayDeployment1631990784133": {
+          "ApiGatewayDeployment1633103625294": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -760,13 +1305,56 @@
               "StageName": "stg"
             },
             "DependsOn": [
+              "ApiGatewayMethodMemberinfoLifeuseridVarOptions",
               "ApiGatewayMethodPointsBalanceOptions",
-              "ApiGatewayMethodAccountsLifeuseridVarOptions",
+              "ApiGatewayMethodPointsBalanceUserLifeuseridVarOptions",
+              "ApiGatewayMethodAccountsOptions",
+              "ApiGatewayMethodAccountsUserLifeuseridVarOptions",
               "ApiGatewayMethodFisettingsFiVarOptions",
+              "ApiGatewayMethodMemberinfoLifeuseridVarGet",
               "ApiGatewayMethodPointsBalanceGet",
-              "ApiGatewayMethodAccountsLifeuseridVarGet",
+              "ApiGatewayMethodPointsBalanceUserLifeuseridVarGet",
+              "ApiGatewayMethodAccountsGet",
+              "ApiGatewayMethodAccountsUserLifeuseridVarGet",
               "ApiGatewayMethodFisettingsFiVarGet"
             ]
+          },
+          "GetMemberInfoLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetMemberInfoLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
           },
           "GetPointBalanceHandlerLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
@@ -813,12 +1401,86 @@
               "Principal": "apigateway.amazonaws.com"
             }
           },
+          "GetPointBalanceByUserHandlerLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetPointBalanceByUserHandlerLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
           "GetAccountsHandlerLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
               "FunctionName": {
                 "Fn::GetAtt": [
                   "GetAccountsHandlerLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetAccountsByUserHandlerLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetAccountsByUserHandlerLambdaFunction",
                   "Arn"
                 ]
               },
@@ -995,7 +1657,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "buzz-serverless-stg",
-                "S3Key": "serverless/member-info-api/stg/1631990812226-2021-09-18T18:46:52.226Z/custom-resources.zip"
+                "S3Key": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z/custom-resources.zip"
               },
               "FunctionName": "member-info-api-stg-custom-resource-apigw-cw-role",
               "Handler": "apiGatewayCloudWatchRole/handler.handler",
@@ -1012,6 +1674,101 @@
             "DependsOn": [
               "IamRoleCustomResourcesLambdaExecution"
             ]
+          },
+          "GetMemberInfoIamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "stg",
+                        "member-info-api",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/member-info-api-stg-getMemberInfo:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "dynamodb:Query",
+                          "dynamodb:Scan",
+                          "dynamodb:GetItem",
+                          "dynamodb:PutItem",
+                          "dynamodb:UpdateItem",
+                          "dynamodb:DeleteItem"
+                        ],
+                        "Resource": [
+                          "arn:aws:dynamodb:us-east-1:127301922222:table/fi-settings"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "member-info-api",
+                    "stg",
+                    "getMemberInfo",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              },
+              "ManagedPolicyArns": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+                    ]
+                  ]
+                }
+              ]
+            }
           },
           "GetFiSettingsIamRoleLambdaExecution": {
             "Type": "AWS::IAM::Role",
@@ -1139,22 +1896,40 @@
           "ServerlessDeploymentBucketName": {
             "Value": "buzz-serverless-stg"
           },
+          "GetMemberInfoLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetMemberInfoLambdaVersion2Ro2QP7us37MO0mFbX5DmDNB5moTki8YivAyKyDFys"
+            }
+          },
           "GetPointBalanceHandlerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4"
+              "Ref": "GetPointBalanceHandlerLambdaVersions1q0aRiEj76JFfXP8J6iq986iV46wp2whgQ7uSHGoE"
+            }
+          },
+          "GetPointBalanceByUserHandlerLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetPointBalanceByUserHandlerLambdaVersionomqLzMQKiAqomIAyhBuIVPCJHP9Ykeg7Oa0XOpug"
             }
           },
           "GetAccountsHandlerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60"
+              "Ref": "GetAccountsHandlerLambdaVersionWtR229y7haPu83DiQ6Opbff8Iv63SJTOsg7VT4UIGbY"
+            }
+          },
+          "GetAccountsByUserHandlerLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetAccountsByUserHandlerLambdaVersionJD146waoILQVR4ITj9QzEC1orZBf5KNp3Q4yuodSA"
             }
           },
           "GetFiSettingsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY"
+              "Ref": "GetFiSettingsLambdaVersiong27uojqibfdVQnojqHxawBqcL2CmgoQmELrAXJKQ"
             }
           },
           "ServiceEndpoint": {
@@ -1267,6 +2042,45 @@
     ],
     "pluginsData": {},
     "functions": {
+      "getMemberInfo": {
+        "handler": "controller/member-info.getMemberInfo",
+        "events": [
+          {
+            "http": {
+              "path": "memberinfo/{lifeuserid}",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent"
+                ],
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "iamRoleStatements": [
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"GetMemberInfoIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][1]"
+          }
+        ],
+        "name": "member-info-api-stg-getMemberInfo",
+        "package": {},
+        "memory": 1024,
+        "timeout": 30,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "GetMemberInfoLambdaVersion2Ro2QP7us37MO0mFbX5DmDNB5moTki8YivAyKyDFys"
+      },
       "getPointBalanceHandler": {
         "handler": "controller/points.getPointBalanceHandler",
         "events": [
@@ -1307,14 +2121,48 @@
         "timeout": 30,
         "runtime": "nodejs12.x",
         "vpc": {},
-        "versionLogicalId": "GetPointBalanceHandlerLambdaVersionM5xjZBP5oYqHL9aFuYjsAl9cKVmCiZKXmNwDDhtdA4"
+        "versionLogicalId": "GetPointBalanceHandlerLambdaVersions1q0aRiEj76JFfXP8J6iq986iV46wp2whgQ7uSHGoE"
+      },
+      "getPointBalanceByUserHandler": {
+        "handler": "controller/points.getPointBalanceByUserHandler",
+        "events": [
+          {
+            "http": {
+              "path": "points/balance/user/{lifeuserid}",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agen"
+                ],
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "member-info-api-stg-getPointBalanceByUserHandler",
+        "package": {},
+        "memory": 1024,
+        "timeout": 30,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "GetPointBalanceByUserHandlerLambdaVersionomqLzMQKiAqomIAyhBuIVPCJHP9Ykeg7Oa0XOpug"
       },
       "getAccountsHandler": {
         "handler": "controller/accounts.getAccountsHandler",
         "events": [
           {
             "http": {
-              "path": "accounts/{lifeuserid}",
+              "path": "accounts",
               "method": "get",
               "cors": {
                 "origin": "*",
@@ -1349,7 +2197,41 @@
         "timeout": 30,
         "runtime": "nodejs12.x",
         "vpc": {},
-        "versionLogicalId": "GetAccountsHandlerLambdaVersionPJbgsoZRt9m1cpbvn0Gwt4vIfdyUHnPJd5xJXff60"
+        "versionLogicalId": "GetAccountsHandlerLambdaVersionWtR229y7haPu83DiQ6Opbff8Iv63SJTOsg7VT4UIGbY"
+      },
+      "getAccountsByUserHandler": {
+        "handler": "controller/accounts.getAccountsByUserHandler",
+        "events": [
+          {
+            "http": {
+              "path": "accounts/user/{lifeuserid}",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent"
+                ],
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "member-info-api-stg-getAccountsByUserHandler",
+        "package": {},
+        "memory": 1024,
+        "timeout": 30,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "GetAccountsByUserHandlerLambdaVersionJD146waoILQVR4ITj9QzEC1orZBf5KNp3Q4yuodSA"
       },
       "getFiSettings": {
         "handler": "controller/fi-settings.getFiSettingsHandler",
@@ -1396,7 +2278,7 @@
         "timeout": 30,
         "runtime": "nodejs12.x",
         "vpc": {},
-        "versionLogicalId": "GetFiSettingsLambdaVersionSUlIpGfvkyzuBsBeFUwS8uVDy1pAkdRXVpiPLFQy3RY"
+        "versionLogicalId": "GetFiSettingsLambdaVersiong27uojqibfdVQnojqHxawBqcL2CmgoQmELrAXJKQ"
       }
     },
     "resources": {
@@ -1436,7 +2318,7 @@
     "artifact": "C:\\Users\\18502\\Lambda\\member-info-service\\.serverless\\member-info-api.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/member-info-api/stg/1631990812226-2021-09-18T18:46:52.226Z",
+    "artifactDirectoryName": "serverless/member-info-api/stg/1633103658506-2021-10-01T15:54:18.506Z",
     "artifact": "member-info-api.zip"
   }
 }
